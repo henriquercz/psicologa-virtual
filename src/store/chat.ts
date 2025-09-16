@@ -119,9 +119,9 @@ export const useChatStore = create<ChatState>()(
       },
 
       addMessage: (message: Message) => {
-        set(state => ({
-          messages: [...state.messages, message],
-        }))
+        set({
+  messages: [...get().messages, message]
+})
       },
 
       clearMessages: () => {
