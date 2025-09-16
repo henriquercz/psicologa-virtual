@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { THERAPEUTIC_TECHNIQUES, SESSION_STRUCTURE, THERAPEUTIC_PHRASES } from './sessionStructure'
+import { ProactiveChatService } from './proactiveChat'
 
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY
 
@@ -107,25 +108,36 @@ export interface Message {
 
 export class GeminiService {
   private chat: any = null
+  private userProfile: any = null
   private conversationHistory: Message[] = []
 
-  async initializeChat(history: Message[] = []) {
-    this.conversationHistory = history
-    
-    // Converte histórico para formato do Gemini
-    const geminiHistory = history.map(msg => ({
-      role: msg.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: msg.content }]
-    }))
+  setUserProfile(profile: any) {
+    this.userProfile = profile
+  }
 
-    this.chat = model?.startChat({
-      history: geminiHistory,
+  async initializeChat() {
+    if (!model) return
+
+    // Adicionar contexto do perfil do usuário se disponível
+    let systemContext = ''
+    if (this.userProfile) {
+      systemContext = ProactiveChatService.generateAIContext(this.userProfile)
+    }
+
+    this.chat = model.startChat({
       generationConfig: {
         temperature: 0.7,
         topK: 40,
         topP: 0.95,
         maxOutputTokens: 1024,
       },
+      history: systemContext ? [{
+        role: 'user',
+        parts: [{ text: `CONTEXTO DO PACIENTE: ${systemContext}` }]
+      }, {
+        role: 'model', 
+        parts: [{ text: 'Entendi perfeitamente o perfil e contexto do paciente. Estou preparada para conduzir uma sessão terapêutica personalizada e eficaz.' }]
+      }] : []
     })
   }
 

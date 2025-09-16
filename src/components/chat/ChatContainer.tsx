@@ -3,6 +3,8 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { ChatMessage } from './ChatMessage'
 import { ChatInput } from './ChatInput'
 import { useChatStore } from '@/store/chat'
+import { useAuthStore } from '@/store/auth'
+import { ProactiveChatService } from '@/lib/proactiveChat'
 
 export function ChatContainer() {
   const { messages, loadMessages } = useChatStore()
@@ -19,10 +21,15 @@ export function ChatContainer() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  // Gerar mensagem proativa baseada no perfil do usuário
+  const { userProfile } = useAuthStore()
+  
   const welcomeMessage = {
     id: 'welcome',
     role: 'assistant' as const,
-    content: `Olá, seja muito bem-vindo(a). Eu sou a Dra. Sofia, psicóloga clínica com 15 anos de experiência em terapia cognitivo-comportamental e mindfulness.
+    content: userProfile 
+      ? ProactiveChatService.generateInitialMessage(userProfile).content
+      : `Olá, seja muito bem-vindo(a). Eu sou a Dra. Sofia, psicóloga clínica com 15 anos de experiência em terapia cognitivo-comportamental e mindfulness.
 
 ... *acolhimento caloroso*
 

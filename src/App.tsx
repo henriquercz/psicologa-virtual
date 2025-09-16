@@ -1,49 +1,51 @@
 import { useEffect } from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthForm } from '@/components/auth/AuthForm'
 import { ChatContainer } from '@/components/chat/ChatContainer'
+import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow'
 import { useAuthStore } from '@/store/auth'
 
 function App() {
-  const { user, loading, initialize } = useAuthStore()
+  const { user, loading, needsOnboarding, userProfile, initialize, completeOnboarding } = useAuthStore()
 
   useEffect(() => {
     initialize()
   }, [initialize])
 
+  useEffect(() => {
+    // Verificar se usuário precisa fazer onboarding
+    if (user && !userProfile) {
+      const savedProfile = localStorage.getItem('user_profile')
+      if (!savedProfile) {
+        // Marcar que precisa fazer onboarding
+        useAuthStore.setState({ needsOnboarding: true })
+      } else {
+        // Carregar perfil salvo
+        const profile = JSON.parse(savedProfile)
+        useAuthStore.setState({ userProfile: profile, needsOnboarding: false })
+      }
+    }
+  }, [user, userProfile])
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-therapy-50 via-white to-calm-50">
-        <div className="text-center space-y-4">
-          <div className="animate-pulse-gentle">
-            <div className="w-16 h-16 therapy-gradient rounded-full mx-auto flex items-center justify-center">
-              <span className="text-white text-2xl">💙</span>
-            </div>
-          </div>
-          <p className="text-gray-600">Carregando...</p>
+      <div className="min-h-screen bg-gradient-to-b from-therapy-50/30 to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-therapy-200 border-t-therapy-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-therapy-600 font-medium">Carregando...</p>
         </div>
       </div>
     )
   }
 
-  return (
-    <Router>
-      <Routes>
-        <Route 
-          path="/auth" 
-          element={user ? <Navigate to="/chat" replace /> : <AuthForm />} 
-        />
-        <Route 
-          path="/chat" 
-          element={user ? <ChatContainer /> : <Navigate to="/auth" replace />} 
-        />
-        <Route 
-          path="/" 
-          element={<Navigate to={user ? "/chat" : "/auth"} replace />} 
-        />
-      </Routes>
-    </Router>
-  )
+  if (!user) {
+    return <AuthForm />
+  }
+
+  if (needsOnboarding) {
+    return <OnboardingFlow onComplete={completeOnboarding} />
+  }
+
+  return <ChatContainer />
 }
 
 export default App

@@ -100,39 +100,27 @@ export const useChatStore = create<ChatState>()(
           }
 
           // Salva resposta da IA no localStorage
-          const assistantConversation = {
-            id: assistantMessage.id,
-            user_id: userId,
-            role: 'assistant',
-            content: aiResponse,
-            day_key: dayKey,
-            timestamp: assistantMessage.timestamp.toISOString(),
-          }
           
-          const updatedConversations = JSON.parse(localStorage.getItem(storageKey) || '[]')
-          updatedConversations.push(assistantConversation)
-          localStorage.setItem(storageKey, JSON.stringify(updatedConversations))
-
-          set(state => ({
-            messages: [...state.messages, assistantMessage],
-            isLoading: false,
-          }))
+          addMessage(assistantMessage)
         } catch (error) {
           console.error('Erro ao enviar mensagem:', error)
-          set({ isLoading: false })
           
           // Adiciona mensagem de erro
           const errorMessage: Message = {
-            id: `error_${Date.now()}`,
+            id: crypto.randomUUID(),
             role: 'assistant',
             content: 'Desculpe, ocorreu um erro ao processar sua mensagem. Tente novamente.',
-            timestamp: new Date(),
+            timestamp: new Date()
           }
           
-          set(state => ({
-            messages: [...state.messages, errorMessage],
-          }))
+          addMessage(errorMessage)
         }
+      },
+
+      addMessage: (message: Message) => {
+        set(state => ({
+          messages: [...state.messages, message],
+        }))
       },
 
       clearMessages: () => {

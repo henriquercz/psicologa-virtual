@@ -5,17 +5,23 @@ interface AuthState {
   user: AuthUser | null
   token: string | null
   loading: boolean
+  needsOnboarding: boolean
+  userProfile: any | null
   signIn: (email: string, password: string) => Promise<void>
   signUp: (email: string, password: string, fullName: string) => Promise<void>
   signOut: () => void
   initialize: () => void
   updateProfile: (updates: Partial<Pick<AuthUser, 'full_name' | 'avatar_url'>>) => Promise<void>
+  completeOnboarding: (profile: any) => void
+  setUserProfile: (profile: any) => void
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   token: null,
   loading: true,
+  needsOnboarding: false,
+  userProfile: null,
 
   signIn: async (email: string, password: string) => {
     try {
@@ -77,5 +83,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (error) {
       throw error
     }
+  },
+
+  completeOnboarding: (profile: any) => {
+    set({ needsOnboarding: false, userProfile: profile })
+    // Salvar perfil no localStorage temporariamente
+    localStorage.setItem('user_profile', JSON.stringify(profile))
+  },
+
+  setUserProfile: (profile: any) => {
+    set({ userProfile: profile })
   },
 }))
