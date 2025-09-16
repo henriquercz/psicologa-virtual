@@ -102,7 +102,7 @@ export const useChatStore = create<ChatState>()(
 
           // Salva resposta da IA no localStorage
           
-          addMessage(assistantMessage)
+          get().addMessage(assistantMessage)
         } catch (error) {
           console.error('Erro ao enviar mensagem:', error)
           
@@ -114,7 +114,7 @@ export const useChatStore = create<ChatState>()(
             timestamp: new Date()
           }
           
-          addMessage(errorMessage)
+          get().addMessage(errorMessage)
         }
       },
 
