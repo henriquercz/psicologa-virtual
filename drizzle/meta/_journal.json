@@ -1,0 +1,13 @@
+{
+  "version": "5",
+  "dialect": "pg",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1757986687060,
+      "tag": "0000_aromatic_sentinels",
+      "breakpoints": true
+    }
+  ]
+}
