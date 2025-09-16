@@ -90,7 +90,7 @@ export const useChatStore = create<ChatState>()(
           localStorage.setItem(storageKey, JSON.stringify(existingConversations))
 
           // Gera resposta da IA
-          await geminiService.initializeChat([...messages, userMessage])
+          await geminiService.initializeChat()
           const aiResponse = await geminiService.sendMessage(content)
 
           const assistantMessage: Message = {
