@@ -17,6 +17,7 @@ export interface ChatState {
   loadMessages: (userId: string) => Promise<void>
   sendMessage: (content: string, userId: string) => Promise<void>
   clearMessages: () => void
+  addMessage: (message: Message) => void
 }
 
 export const useChatStore = create<ChatState>()(
