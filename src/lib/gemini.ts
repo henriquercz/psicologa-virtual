@@ -141,26 +141,35 @@ export class GeminiService {
     })
   }
 
-  async sendMessage(message: string): Promise<string> {
-    // Se não há API key válida, retorna resposta mock profissional
+  // Overloads para compatibilidade com chamadas antigas (0 args) e novas (message, onTyping)
+  async sendMessage(): Promise<string>
+  async sendMessage(message: string, onTyping?: (text: string) => void): Promise<string>
+  async sendMessage(message?: string, onTyping?: (text: string) => void): Promise<string> {
+    // Se não há API key válida, retorna resposta mock profissional com simulação de digitação
     if (!model || !apiKey) {
-      const professionalResponses = [
-        "Olá, eu sou a Dra. Sofia. É um prazer recebê-lo(a) aqui hoje. Vejo que você decidiu buscar apoio, e isso já demonstra uma grande coragem e autoconhecimento.\n\n... *pausa reflexiva*\n\nComo você está chegando hoje? O que te trouxe até aqui neste momento?",
-        
-        "Percebo que há algo importante que você gostaria de compartilhar comigo. Na nossa conversa, quero que você se sinta completamente à vontade para expressar o que está sentindo.\n\n... *escuta atentamente*\n\nMe conte, como tem sido para você lidar com essas questões no seu dia a dia?",
-        
-        "Entendo que você está passando por um momento desafiador. É completamente natural sentir-se assim diante das circunstâncias que você está vivenciando.\n\n... *validação empática*\n\nVamos trabalhar isso juntos. Que tal começarmos explorando como esses sentimentos se manifestam no seu corpo? Você consegue identificar onde sente essas emoções fisicamente?",
-        
-        "Vejo que há uma busca genuína por compreensão e mudança. Isso me diz muito sobre sua força interior, mesmo que talvez você não se sinta forte neste momento.\n\n... *reflexão terapêutica*\n\nMe ajude a entender melhor: quando você pensa sobre essa situação, quais são os primeiros pensamentos que vêm à sua mente?",
-        
-        "Obrigada por confiar em mim e compartilhar algo tão pessoal. Reconheço a vulnerabilidade que isso exige, e quero que saiba que este é um espaço seguro para você.\n\n... *presença terapêutica*\n\nVamos fazer uma pausa por um momento. Respire comigo: inspire lentamente... segure... e expire devagar. Como você se sente agora, neste momento presente?"
+      const input = (message ?? '').trim()
+
+      // Gera uma resposta contextual simples baseada na entrada do usuário, evitando repetições fixas
+      const followUps = [
+        'O que você percebe que mais pesa quando essa situação acontece?',
+        'Quais pensamentos vêm primeiro quando isso acontece?',
+        'Como isso tem afetado seu dia a dia nas últimas semanas?',
+        'Há algo que costuma aliviar, mesmo que um pouco, quando isso acontece?',
+        'Se pudesse nomear essa emoção principal em uma palavra, qual seria?'
       ]
-      
-      const contextualResponse = professionalResponses[Math.floor(Math.random() * professionalResponses.length)]
-      
-      // Simula tempo de reflexão terapêutica
-      await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 3000))
-      
+      const pick = followUps[Math.floor(Math.random() * followUps.length)]
+
+      const preface = input
+        ? `Estou acompanhando o que você trouxe: "${input.slice(0, 180)}".`
+        : 'Obrigado por compartilhar. Estou aqui com você.'
+
+      const contextualResponse = `${preface}\n\n${pick}`
+
+      // Simular digitação em tempo real
+      if (onTyping) {
+        await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 500))
+        onTyping(contextualResponse)
+      }
       return contextualResponse
     }
 
@@ -169,7 +178,12 @@ export class GeminiService {
     }
 
     try {
-      const result = await this.chat.sendMessage(message)
+      if (!this.chat) {
+        throw new Error('Chat não inicializado. Verifique a API key do Gemini.')
+      }
+
+      const userText = (message ?? '').toString()
+      const result = await this.chat.sendMessage(userText)
       const response = await result.response
       const text = response.text()
 
@@ -177,7 +191,7 @@ export class GeminiService {
       this.conversationHistory.push({
         id: `user_${Date.now()}_${Math.random()}`,
         role: 'user',
-        content: message,
+        content: userText,
         timestamp: new Date()
       })
 
