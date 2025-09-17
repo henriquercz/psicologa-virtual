@@ -15,56 +15,6 @@ export class GeminiService {
     return
   }
 
-  // Quebra mensagem longa em pedaços com sentido
-  private breakIntoChunks(text: string): string[] {
-    // Se a mensagem é curta, retorna como está
-    if (text.length <= 150) {
-      return [text]
-    }
-
-    const chunks: string[] = []
-    const sentences = text.split(/(?<=[.!?])\s+/)
-    let currentChunk = ''
-
-    for (const sentence of sentences) {
-      // Se adicionar esta frase não ultrapassar 150 chars, adiciona
-      if ((currentChunk + ' ' + sentence).length <= 150) {
-        currentChunk = currentChunk ? currentChunk + ' ' + sentence : sentence
-      } else {
-        // Se o chunk atual não está vazio, salva ele
-        if (currentChunk) {
-          chunks.push(currentChunk.trim())
-        }
-        // Inicia novo chunk com a frase atual
-        currentChunk = sentence
-      }
-    }
-
-    // Adiciona o último chunk se não estiver vazio
-    if (currentChunk) {
-      chunks.push(currentChunk.trim())
-    }
-
-    return chunks.length > 0 ? chunks : [text]
-  }
-
-  // Simula digitação progressiva de múltiplos chunks
-  private async simulateTyping(chunks: string[], onTyping?: (text: string) => void): Promise<void> {
-    if (!onTyping || chunks.length <= 1) return
-
-    for (let i = 0; i < chunks.length; i++) {
-      // Delay entre chunks (simula pausa para pensar)
-      if (i > 0) {
-        await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 1200))
-      }
-      
-      // Delay inicial antes de começar a "digitar"
-      await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 500))
-      
-      // Mostra o chunk atual
-      onTyping(chunks[i])
-    }
-  }
 
   // Overloads para compatibilidade com chamadas antigas (0 args) e novas (message, onTyping)
   async sendMessage(): Promise<string>
@@ -85,15 +35,9 @@ export class GeminiService {
         const text = (data.text ?? '').toString()
 
         if (text) {
-          // Quebra a resposta em chunks menores
-          const chunks = this.breakIntoChunks(text)
-          
-          // Se há múltiplos chunks, simula digitação progressiva
-          if (chunks.length > 1 && onTyping) {
-            await this.simulateTyping(chunks, onTyping)
-          } else if (onTyping) {
-            // Para mensagens curtas, simula digitação normal
-            await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 500))
+          // Simula digitação natural (sem quebrar em chunks, pois agora as respostas são curtas)
+          if (onTyping) {
+            await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 800))
             onTyping(text)
           }
 
