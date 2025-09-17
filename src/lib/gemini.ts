@@ -15,7 +15,6 @@ export class GeminiService {
     return
   }
 
-
   // Overloads para compatibilidade com chamadas antigas (0 args) e novas (message, onTyping)
   async sendMessage(): Promise<string>
   async sendMessage(message: string, onTyping?: (text: string) => void): Promise<string>
@@ -35,12 +34,6 @@ export class GeminiService {
         const text = (data.text ?? '').toString()
 
         if (text) {
-          // Simula digitação natural (sem quebrar em chunks, pois agora as respostas são curtas)
-          if (onTyping) {
-            await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 800))
-            onTyping(text)
-          }
-
           // Adiciona ao histórico local
           this.conversationHistory.push({
             id: `user_${Date.now()}_${Math.random()}`,
@@ -68,21 +61,20 @@ export class GeminiService {
       // Cai no fallback abaixo
     }
 
-    // Fallback contextual no cliente - respostas curtas e naturais
+    // Fallback contextual no cliente (sem anotações e com uso da entrada do usuário)
     const input = userText.trim()
-    const shortResponses = [
-      'Entendo. O que mais te preocupa sobre isso?',
-      'Percebo que isso é importante para você. Como se sente agora falando sobre isso?',
-      'Isso deve ser difícil. Quando começou a perceber esses sentimentos?',
-      'Obrigada por compartilhar. O que você gostaria de explorar primeiro?',
-      'Vejo que há muito acontecendo. Qual parte pesa mais?',
-      'Como isso tem afetado você no dia a dia?',
-      'O que passa pela sua cabeça quando isso acontece?'
+    const followUps = [
+      'O que você percebe que mais pesa quando essa situação acontece?',
+      'Quais pensamentos vêm primeiro quando isso acontece?',
+      'Como isso tem afetado seu dia a dia nas últimas semanas?',
+      'Há algo que costuma aliviar, mesmo que um pouco, quando isso acontece?',
+      'Se pudesse nomear essa emoção principal em uma palavra, qual seria?'
     ]
-    
-    const contextualResponse = input.length > 10 
-      ? shortResponses[Math.floor(Math.random() * shortResponses.length)]
-      : 'Olá, eu sou a Dra. Sofia. Como você está chegando hoje?'
+    const pick = followUps[Math.floor(Math.random() * followUps.length)]
+    const preface = input
+      ? `Estou acompanhando o que você trouxe: "${input.slice(0, 180)}".`
+      : 'Obrigado por compartilhar. Estou aqui com você.'
+    const contextualResponse = `${preface}\n\n${pick}`
 
     if (onTyping) {
       await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 500))

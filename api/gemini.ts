@@ -17,18 +17,7 @@ async function callGemini(message: string, apiKey: string, attempt = 1): Promise
         role: 'user',
         parts: [{ text: message }]
       }
-    ],
-    generationConfig: {
-      maxOutputTokens: 150, // Limita resposta para ~100-150 palavras (consulta real)
-      temperature: 0.7,
-      topP: 0.8,
-      topK: 40
-    },
-    systemInstruction: {
-      parts: [{
-        text: "Você é Dra. Sofia, psicóloga clínica experiente. Suas respostas devem ser CURTAS (máximo 2-3 frases), naturais e focadas em UMA questão por vez. Use linguagem acolhedora mas concisa. Faça perguntas abertas para aprofundar. Evite listas ou explicações longas. Mantenha sempre o foco terapêutico, mas seja BREVE e DIRETA."
-      }]
-    }
+    ]
   }
 
   const url = `${GEMINI_ENDPOINT}?key=${encodeURIComponent(apiKey)}`
