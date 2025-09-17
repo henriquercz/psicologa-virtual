@@ -15,6 +15,57 @@ export class GeminiService {
     return
   }
 
+  // Quebra mensagem longa em pedaços com sentido
+  private breakIntoChunks(text: string): string[] {
+    // Se a mensagem é curta, retorna como está
+    if (text.length <= 150) {
+      return [text]
+    }
+
+    const chunks: string[] = []
+    const sentences = text.split(/(?<=[.!?])\s+/)
+    let currentChunk = ''
+
+    for (const sentence of sentences) {
+      // Se adicionar esta frase não ultrapassar 150 chars, adiciona
+      if ((currentChunk + ' ' + sentence).length <= 150) {
+        currentChunk = currentChunk ? currentChunk + ' ' + sentence : sentence
+      } else {
+        // Se o chunk atual não está vazio, salva ele
+        if (currentChunk) {
+          chunks.push(currentChunk.trim())
+        }
+        // Inicia novo chunk com a frase atual
+        currentChunk = sentence
+      }
+    }
+
+    // Adiciona o último chunk se não estiver vazio
+    if (currentChunk) {
+      chunks.push(currentChunk.trim())
+    }
+
+    return chunks.length > 0 ? chunks : [text]
+  }
+
+  // Simula digitação progressiva de múltiplos chunks
+  private async simulateTyping(chunks: string[], onTyping?: (text: string) => void): Promise<void> {
+    if (!onTyping || chunks.length <= 1) return
+
+    for (let i = 0; i < chunks.length; i++) {
+      // Delay entre chunks (simula pausa para pensar)
+      if (i > 0) {
+        await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 1200))
+      }
+      
+      // Delay inicial antes de começar a "digitar"
+      await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 500))
+      
+      // Mostra o chunk atual
+      onTyping(chunks[i])
+    }
+  }
+
   // Overloads para compatibilidade com chamadas antigas (0 args) e novas (message, onTyping)
   async sendMessage(): Promise<string>
   async sendMessage(message: string, onTyping?: (text: string) => void): Promise<string>
@@ -34,6 +85,18 @@ export class GeminiService {
         const text = (data.text ?? '').toString()
 
         if (text) {
+          // Quebra a resposta em chunks menores
+          const chunks = this.breakIntoChunks(text)
+          
+          // Se há múltiplos chunks, simula digitação progressiva
+          if (chunks.length > 1 && onTyping) {
+            await this.simulateTyping(chunks, onTyping)
+          } else if (onTyping) {
+            // Para mensagens curtas, simula digitação normal
+            await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 500))
+            onTyping(text)
+          }
+
           // Adiciona ao histórico local
           this.conversationHistory.push({
             id: `user_${Date.now()}_${Math.random()}`,
@@ -61,20 +124,21 @@ export class GeminiService {
       // Cai no fallback abaixo
     }
 
-    // Fallback contextual no cliente (sem anotações e com uso da entrada do usuário)
+    // Fallback contextual no cliente - respostas curtas e naturais
     const input = userText.trim()
-    const followUps = [
-      'O que você percebe que mais pesa quando essa situação acontece?',
-      'Quais pensamentos vêm primeiro quando isso acontece?',
-      'Como isso tem afetado seu dia a dia nas últimas semanas?',
-      'Há algo que costuma aliviar, mesmo que um pouco, quando isso acontece?',
-      'Se pudesse nomear essa emoção principal em uma palavra, qual seria?'
+    const shortResponses = [
+      'Entendo. O que mais te preocupa sobre isso?',
+      'Percebo que isso é importante para você. Como se sente agora falando sobre isso?',
+      'Isso deve ser difícil. Quando começou a perceber esses sentimentos?',
+      'Obrigada por compartilhar. O que você gostaria de explorar primeiro?',
+      'Vejo que há muito acontecendo. Qual parte pesa mais?',
+      'Como isso tem afetado você no dia a dia?',
+      'O que passa pela sua cabeça quando isso acontece?'
     ]
-    const pick = followUps[Math.floor(Math.random() * followUps.length)]
-    const preface = input
-      ? `Estou acompanhando o que você trouxe: "${input.slice(0, 180)}".`
-      : 'Obrigado por compartilhar. Estou aqui com você.'
-    const contextualResponse = `${preface}\n\n${pick}`
+    
+    const contextualResponse = input.length > 10 
+      ? shortResponses[Math.floor(Math.random() * shortResponses.length)]
+      : 'Olá, eu sou a Dra. Sofia. Como você está chegando hoje?'
 
     if (onTyping) {
       await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 500))
