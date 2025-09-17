@@ -46,9 +46,18 @@ export default async function handler(req: Request) {
       return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: { 'Content-Type': 'application/json' } })
     }
 
-    const apiKey = process.env.GEMINI_API_KEY
+    // Debug: verificar variáveis de ambiente disponíveis
+    const envKeys = Object.keys(process.env).filter(key => key.includes('GEMINI') || key.includes('API'))
+    console.log('Environment keys containing GEMINI or API:', envKeys)
+    
+    const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY
+    console.log('API Key found:', apiKey ? 'YES' : 'NO')
+    
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: 'Missing GEMINI_API_KEY' }), { status: 500, headers: { 'Content-Type': 'application/json' } })
+      return new Response(JSON.stringify({ 
+        error: 'Missing GEMINI_API_KEY', 
+        debug: { envKeys, hasGeminiKey: !!process.env.GEMINI_API_KEY, hasViteGeminiKey: !!process.env.VITE_GEMINI_API_KEY }
+      }), { status: 500, headers: { 'Content-Type': 'application/json' } })
     }
 
     const { message } = await req.json() as { message?: string }
